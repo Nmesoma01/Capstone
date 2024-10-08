@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET;  // Load the JWT secret from environm
 
 // Register (Signup) Route
 router.post('/signup', async (req, res) => {
-    const { email, password } = req.body;
+    const { name, email, password } = req.body;
     try {
         let user = await User.findOne({ email });
         if (user) return res.status(400).json({ message: 'User already exists' });
