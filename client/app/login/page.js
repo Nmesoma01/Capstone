@@ -1,7 +1,7 @@
 import React from 'react';
 import { Camera} from 'lucide-react';
 
-const ArtsKhonnectLogin = () => {
+const Login = () => {
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
       <header className="p-5">
@@ -72,4 +72,4 @@ const ArtsKhonnectLogin = () => {
   );
 };
 
-export default ArtsKhonnectLogin;
+export default Login;

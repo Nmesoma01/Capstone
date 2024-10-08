@@ -1,10 +1,10 @@
 import Image from "next/image";
-import ArtsKhonnectLogin from "./login/page";
+import Login from "./login/page";
 
 export default function Home() {
   return (
     <>
-    <ArtsKhonnectLogin />
+    <Login />
     </>
   );
 }
