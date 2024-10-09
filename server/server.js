@@ -15,7 +15,7 @@ const app = express();
 
 // CORS Middleware (Place this before defining your routes)
 app.use(cors({
-  origin: 'http://localhost:3000', // Allow requests from this frontend
+  origin: 'http://localhost:3001', // Allow requests from this frontend
   credentials: true, // Allow credentials such as cookies, authorization headers
 }));
 
