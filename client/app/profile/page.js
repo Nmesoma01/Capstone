@@ -1,19 +1,43 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Camera } from 'lucide-react';
+import axios from 'axios';
 
 const ProfileSettingsPage = () => {
-  const [profileImage, setProfileImage] = useState('https://metricool.com/wp-content/uploads/Screen-Shot-2023-06-28-at-2.21.12-PM.png');
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [profileImage, setProfileImage] = useState(null);
+  const [portfolioFile, setPortfolioFile] = useState(null);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    name: '',
+    address: '',
+    bio: '',
     accountType: '',
     location: '',
     danceStyle: '',
     experienceLevel: '',
-    portfolio: '',
-    bio: ''
+    portfolio: ''
   });
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/profile');
+      const profileData = response.data;
+      setFormData(profileData);
+      if (profileData.image) {
+        setProfileImage(profileData.image);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -23,21 +47,64 @@ const ProfileSettingsPage = () => {
     }));
   };
 
-  const handleImageChange = () => {
-    // Open file picker
-    alert('Image changed successfully');
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(URL.createObjectURL(file));
+      setFormData(prevData => ({
+        ...prevData,
+        image: file
+      }));
+    }
   };
 
-  const handleImageDelete = () => {
-    setProfileImage('/api/placeholder/150/150');
+  const handlePortfolioChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPortfolioFile(file);
+      setFormData(prevData => ({
+        ...prevData,
+        portfolio: file.name
+      }));
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    //  this would send the form data to a server
-    console.log('Form submitted:', formData);
-    alert('Profile created!');
+    setLoading(true);
+    try {
+      const formDataToSend = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== null && formData[key] !== undefined) {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      if (formData.image instanceof File) {
+        formDataToSend.append('profileImage', formData.image);
+      }
+      if (portfolioFile) {
+        formDataToSend.append('portfolio', portfolioFile);
+      }
+
+      await axios.post('localhost:5000/profile', formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      alert('Profile updated successfully!');
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      alert('Failed to update profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -62,36 +129,45 @@ const ProfileSettingsPage = () => {
               <h2 className="text-2xl font-bold mb-6">Public Profile</h2>
               <div className="mb-6">
                 <div className="w-40 h-40 rounded-full overflow-hidden mb-4">
-                  <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                  <img 
+                    src={profileImage || '/api/placeholder/150/150'} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover" 
+                  />
                 </div>
-                <button onClick={handleImageChange} className="bg-pink-500 text-white px-4 py-2 rounded mr-2">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  className="hidden" 
+                  id="image-upload"
+                />
+                <label htmlFor="image-upload" className="bg-pink-500 text-white px-4 py-2 rounded mr-2 cursor-pointer">
                   Change Picture
-                </button>
-                <button onClick={handleImageDelete} className="bg-gray-300 text-gray-700 px-4 py-2 rounded">
-                  Delete Picture
-                </button>
+                </label>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="firstName" className="block mb-1">First Name</label>
+                    <label htmlFor="name" className="block mb-1">Name</label>
                     <input
                       type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
+                      id="name"
+                      name="name"
+                      value={formData.name}
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded"
+                      required
                     />
                   </div>
                   <div>
-                    <label htmlFor="lastName" className="block mb-1">Last Name</label>
+                    <label htmlFor="address" className="block mb-1">Address</label>
                     <input
                       type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
+                      id="address"
+                      name="address"
+                      value={formData.address}
                       onChange={handleInputChange}
                       className="w-full p-2 border rounded"
                     />
@@ -105,6 +181,7 @@ const ProfileSettingsPage = () => {
                     value={formData.accountType}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
+                    required
                   >
                     <option value="">Select account type</option>
                     <option value="dancer">Dancer</option>
@@ -121,6 +198,7 @@ const ProfileSettingsPage = () => {
                     value={formData.location}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
+                    required
                   />
                 </div>
                 <div>
@@ -131,11 +209,13 @@ const ProfileSettingsPage = () => {
                     value={formData.danceStyle}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
+                    required
                   >
                     <option value="">Select dance style</option>
                     <option value="ballet">Ballet</option>
                     <option value="contemporary">Contemporary</option>
                     <option value="hiphop">Hip Hop</option>
+                    {/* Add more dance styles as needed */}
                   </select>
                 </div>
                 <div>
@@ -146,6 +226,7 @@ const ProfileSettingsPage = () => {
                     value={formData.experienceLevel}
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
+                    required
                   >
                     <option value="">Select experience level</option>
                     <option value="beginner">Beginner</option>
@@ -158,17 +239,19 @@ const ProfileSettingsPage = () => {
                   <label htmlFor="portfolio" className="block mb-1">Portfolio</label>
                   <div className="flex">
                     <input
-                      type="text"
+                      type="file"
                       id="portfolio"
                       name="portfolio"
-                      value={formData.portfolio}
-                      onChange={handleInputChange}
+                      onChange={handlePortfolioChange}
                       className="flex-1 p-2 border rounded-l"
                     />
                     <button type="button" className="bg-pink-500 text-white px-4 py-2 rounded-r">
                       Upload Portfolio
                     </button>
                   </div>
+                  {formData.portfolio && (
+                    <p className="mt-2 text-sm text-gray-600">Current portfolio: {formData.portfolio}</p>
+                  )}
                 </div>
                 <div>
                   <label htmlFor="bio" className="block mb-1">Bio</label>
@@ -181,8 +264,8 @@ const ProfileSettingsPage = () => {
                     className="w-full p-2 border rounded"
                   ></textarea>
                 </div>
-                <button type="submit" className="bg-pink-500 text-white px-6 py-2 rounded">
-                  Create Profile
+                <button type="submit" className="bg-pink-500 text-white px-6 py-2 rounded" disabled={loading}>
+                  {loading ? 'Updating...' : 'Update Profile'}
                 </button>
               </form>
             </main>
