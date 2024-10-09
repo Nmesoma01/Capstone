@@ -1,6 +1,7 @@
-"use client"
+"use client";
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import axios from 'axios'; // Import axios
 import { Camera } from 'lucide-react';
 
 const Signup = () => {
@@ -27,34 +28,30 @@ const Signup = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      setErrorMessage("Passwords do not match");
-      return;
+        setErrorMessage("Passwords do not match");
+        return;
     }
 
     try {
-      const response = await fetch('http://localhost:5000/auth/signup', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password
-        })
-      });
+        const response = await axios.post('http://localhost:5000/auth/signup', {
+            name: formData.name,
+            email: formData.email,
+            password: formData.password
+        });
 
-      const result = await response.json();
-
-      if (response.ok) {
-        router.push('/profile'); 
-      } else {
-        setErrorMessage(result.message || "An error occurred");
-      }
+        if (response.status === 200) {
+            router.push('/profile');
+        }
     } catch (error) {
-      setErrorMessage("Failed to connect to the server");
+        console.error('Error response:', error.response); // Log the error response for debugging
+        if (error.response) {
+            const errorMsg = error.response.data.message || "An error occurred";
+            setErrorMessage(typeof errorMsg === 'string' ? errorMsg : 'An unknown error occurred');
+        } else {
+            setErrorMessage("Failed to connect to the server");
+        }
     }
-  };
+};
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -130,10 +127,10 @@ const Signup = () => {
             <div className="absolute top-1/2 left-0 right-0 h-px bg-gray-300 -z-10"></div>
           </div>
           <button className="w-full p-2 border border-gray-300 font-bold flex items-center justify-center">
-            <Camera className="mr-2" size={20} /> Sign Up With Google
+            <img src="/google.png" /> Sign Up With Google
           </button>
           <div className="text-center mt-4">
-            <a href="#" className="text-pink-500 no-underline">
+            <a href="/login" className="text-pink-500 no-underline">
               Already have an account? Log in
             </a>
           </div>

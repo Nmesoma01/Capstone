@@ -1,5 +1,6 @@
-"use client"
+"use client";
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Camera } from 'lucide-react';
 
 const Login = () => {
@@ -13,27 +14,30 @@ const Login = () => {
     const credentials = { email, password };
 
     try {
-      const response = await fetch('http://localhost:5000/auth/login', {
-        method: 'POST',
+      const response = await axios.post('http://localhost:5000/auth/login', credentials, {
+        withCredentials: true, // Allows cookies to be sent from server (for auth tokens)
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(credentials),
-        credentials: 'include', // Allows cookies to be sent from server (for auth tokens)
       });
 
-      if (response.ok) {
-        // handle successful login (e.g., redirect to dashboard)
-        const data = await response.json();
-        console.log("Login successful:", data);
-        window.location.href = '/profile'; // Redirect after login
-      } else {
-        const errorData = await response.json();
-        setErrorMessage(errorData.message || 'Login failed');
-      }
+      // handle successful login (e.g., redirect to dashboard)
+      console.log("Login successful:", response.data);
+      window.location.href = '/dashboard'; // Redirect after
     } catch (error) {
       console.error('Login error:', error);
-      setErrorMessage('Server error, please try again later.');
+
+      // Handle different types of errors
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        setErrorMessage(error.response.data.message || 'Login failed');
+      } else if (error.request) {
+        // Request was made but no response received
+        setErrorMessage('Server error, please try again later.');
+      } else {
+        // Something else happened in setting up the request
+        setErrorMessage('An unexpected error occurred.');
+      }
     }
   };
 
@@ -96,11 +100,11 @@ const Login = () => {
           </div>
 
           <button className="w-full p-2 border border-gray-300 font-bold flex items-center justify-center">
-            <Camera className="mr-2" size={20} /> Log In With Google
+          <img src="/google.png" /> Log in With Google
           </button>
 
           <div className="text-center mt-4">
-            <a href="#" className="text-pink-500 no-underline">
+            <a href="/signup" className="text-pink-500 no-underline">
               don't have an account? sign up
             </a>
           </div>
